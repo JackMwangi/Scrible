@@ -4,7 +4,7 @@
     
     Usage:
         docopt_example.py -h
-        docopt_example.py <required> [-f | -g | -o ]
+        docopt_example.py <ggghh> [-f | -g | -o ]
         docopt_example.py <repeating>...
     Options:
         -h,--help       : show this help message
@@ -25,8 +25,8 @@ def main(docopt_args):
     # docopt will automagically check for it and use your usage string.
     
     # User passed the required argument
-    if docopt_args["<required>"]:
-        print "You have used the required argument: " + docopt_args["<required>"]
+    if docopt_args["<ggghh>"]:
+        print "You have used the required argument: " + docopt_args["<ggghh>"]
         
         # Get flags used
         if docopt_args["--flag"]:
