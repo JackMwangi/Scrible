@@ -16,7 +16,7 @@ class SyncNotes(object):
 
     def savenotestocloud(self, exists):
         if self.isuserindb():
-            # if self.arenotesindb():
+            if self.arenotesindb():
                 username = self.getusernamefromdb().get("username", "")
                 passhash = self.getusernamefromdb().get("pass", "")
                 if not self.isuserincloud(username):
@@ -37,14 +37,14 @@ class SyncNotes(object):
                 with indent(4, quote=' >'):
                     puts(colored.green("Notes synced"))
                     self.flagsent()
-            # else:
-            #     pass
-                # username = self.getusernamefromdb().get("username", "")
-                # passhash = self.getusernamefromdb().get("pass", "")
-                # if not self.isuserincloud(username):
-                #     self.saveuserincloud(username, passhash)
-                #     exists = "yes"
-                # self.getnotes(username)
+            else:
+                pass
+                username = self.getusernamefromdb().get("username", "")
+                passhash = self.getusernamefromdb().get("pass", "")
+                if not self.isuserincloud(username):
+                    self.saveuserincloud(username, passhash)
+                    exists = "yes"
+                self.getnotes(username)
 
         else:
             with indent(4, quote=' >'):
@@ -53,6 +53,9 @@ class SyncNotes(object):
             name = prompt.query("Enter username")
             pswd = getpass.getpass('Enter password')
             self.createuser(name, pswd)
+
+    def deletenotesfromcloud(self):
+        self.fb.delete('/notes/' + self.getusernamefromdb().get("username", ""), None)
 
     def getnotes(self, user):
         username = self.getusernamefromdb().get("username", "")
@@ -67,6 +70,28 @@ class SyncNotes(object):
                     title = content.get("title")
                     body = content.get("body")
                     self.savenotesindb(title=title, body=body)
+                with indent(4, quote=' >'):
+                    puts(colored.green("Notes synced"))
+            else:
+                with indent(4, quote=' >'):
+                    puts(
+                        colored.green("Sorry,no notes present found in the cloud"))
+        else:
+            pass
+    def getreturnnotes(self, user):
+        username = self.getusernamefromdb().get("username", "")
+        if username != "":
+            notes = self.fb.get('/notes/' + user, None)
+            listnotes = []
+            if notes != None:
+                for k, v in notes.iteritems():
+                    listnotes = v
+                for i in listnotes:
+                    content = i.get("content")
+                    title = content.get("title")
+                    body = content.get("body")
+                    listnotes.append(title)
+                return listnotes
                 with indent(4, quote=' >'):
                     puts(colored.green("Notes synced"))
             else:
@@ -110,7 +135,7 @@ class SyncNotes(object):
 
     def getusernamefromdb(self):
         name = {}
-        for row in self.dbmgr.query("select * from users"):
+        for row in self.dbmgr.query("select * from users limit 1"):
             name["username"] = row[1]
             name["pass"] = row[2]
         return name

@@ -2,6 +2,7 @@ from DatabaseManager import DatabaseManager
 from ..sync import cloudsync
 import time
 
+
 class NoteOperations(object):
     dbmgr = None
 
@@ -18,7 +19,8 @@ class NoteOperations(object):
         elif len(content) == 1:
             title = content['title']
         self.dbmgr.query(
-            "insert into notes(Title,Content,sent,datecreated) VALUES('" + title + "','" + body + "','NO','"+self.gettime()+"')")
+            "insert into notes(Title,Content,sent,datecreated) VALUES('" + title + "','" + body + "','NO','" + self.gettime() + "')")
+
 
     def view(self, noteid=""):
         notetext = {}
@@ -28,11 +30,12 @@ class NoteOperations(object):
             notetext["body"] = row[2]
         return notetext
 
-    def delete(self, noteid="",allnotes = "one"):
+    def delete(self, noteid="", allnotes="one"):
         dbmgr = DatabaseManager("scribler.db")
-        if allnotes == "one" :
+        if allnotes == "one":
             print "onenote"
-            status = dbmgr.query("delete from notes where _id = '" + noteid + "'")
+            status = dbmgr.query(
+                "delete from notes where _id = '" + noteid + "'")
         else:
             print "allnotes"
             status = dbmgr.query("delete from notes")
@@ -50,6 +53,12 @@ class NoteOperations(object):
         sy = cloudsync.SyncNotes(dbmgr)
         sy.savenotestocloud("yes")
 
+    def deletenotesfromcloud(self):
+
+        dbmgr = DatabaseManager("scribler.db")
+        sy = cloudsync.SyncNotes(dbmgr)
+        sy.deletenotesfromcloud()
+
     def viewall(self, limit=1):
         listtext = []
         dbmgr = DatabaseManager("scribler.db")
@@ -62,6 +71,7 @@ class NoteOperations(object):
                 notetext["datecreated"] = row[4]
                 listtext.append(notetext)
         elif limit > 1:
+
             for row in dbmgr.query("select * from notes limit '" + str(limit) + "'"):
                 notetext = {}
                 notetext["_id"] = row[0]
@@ -72,9 +82,31 @@ class NoteOperations(object):
 
         return listtext
 
+    def viewallskip(self, limit=1, offset=1):
+        listtext = []
+        dbmgr = DatabaseManager("scribler.db")
+        if limit == 1:
+            for row in dbmgr.query("select * from notes"):
+                notetext = {}
+                notetext["_id"] = row[0]
+                notetext["title"] = row[1]
+                notetext["body"] = row[2]
+                notetext["datecreated"] = row[4]
+                listtext.append(notetext)
+        elif limit > 1:
+            for row in dbmgr.query("select * from notes limit '" + str(limit) + "' OFFSET '" + offset + "'"):
+                notetext = {}
+                notetext["_id"] = row[0]
+                notetext["title"] = row[1]
+                notetext["body"] = row[2]
+                notetext["datecreated"] = row[4]
+                listtext.append(notetext)
+
+        return listtext
+
     def gettime(self):
-        localtime   = time.localtime()
-        timeString  = time.strftime("%H:%M %d/%m/%Y", localtime)
+        localtime = time.localtime()
+        timeString = time.strftime("%H:%M %d/%m/%Y", localtime)
         return timeString
 
     def search(self, query="", limit=1):

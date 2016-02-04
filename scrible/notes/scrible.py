@@ -4,11 +4,11 @@
 This shows the usage and options that available for the Scrible note taking app
 Usage:
     scrible createnote  (<note_title>) [-m]
-    scrible viewnote    (<note_id>)
+    scrible viewnote    (<note_id>) [-m]
     scrible deletenote  (<note_id> | -a)
     scrible searchnotes (<query_string>) [(--limit=<items>)]
     scrible viewnote    (<note_id>)
-    scrible listnotes   [(--limit=<items>)]
+    scrible listnotes   [(--limit <items>)]
     scrible next
     scrible export      (<filename>)
     scrible import      (<filename>)
@@ -23,11 +23,14 @@ Options:
 
 import sys
 import csv
+import tempfile
+import subprocess
 import os
 import cmd
 from docopt import docopt, DocoptExit
 from noteoperations import NoteOperations
 from clint.textui import colored, puts, indent
+import sqlite3
 
 
 def docopt_cmd(func):
@@ -63,6 +66,7 @@ def docopt_cmd(func):
 
 
 class Scrible (cmd.Cmd):
+
     intro = 'Welcome to Scrible NoteApp!' \
         + ' (type help for a list of commands.)'
     prompt = '(Scrible) '
@@ -76,7 +80,7 @@ class Scrible (cmd.Cmd):
 
     @docopt_cmd
     def do_viewnote(self, arg):
-        """Usage: viewnote    (<note_id>)"""
+        """Usage: viewnote    (<note_id>) [-m]"""
 
         viewsinglenote(arg)
 
@@ -94,7 +98,7 @@ class Scrible (cmd.Cmd):
 
     @docopt_cmd
     def do_listnotes(self, arg):
-        """Usage: listnotes   [(--limit=<items>)]"""
+        """Usage: listnotes   [(--limit <items>)]"""
 
         listnotes(arg)
 
@@ -115,6 +119,11 @@ class Scrible (cmd.Cmd):
         """Usage: import   (<filename>)"""
 
         importnotes(arg)
+
+    @docopt_cmd
+    def do_next(self, arg):
+        """Usage: next  """
+        nextquery(arg)
 
     def do_quit(self, arg):
         """Exit application."""
@@ -143,43 +152,52 @@ def createnewnote(docopt_args):
 
 def viewsinglenote(docopt_args):
     noteid = docopt_args["<note_id>"]
-    note = NoteOperations()
-    contents = note.view(noteid)
-    with indent(4, quote=' >'):
-        puts(colored.green(contents.get("title", "========NOT FOUND=======")))
-    with indent(4):
-        puts(colored.yellow(contents.get("body", "========NOT FOUND=======")))
+    if docopt_args["-m"]:
+        note = NoteOperations()
+        contents = note.view(noteid)
+
+    else:
+        note = NoteOperations()
+        contents = note.view(noteid)
+        with indent(4, quote=' >'):
+            puts(colored.green(contents.get("title", "========NOT FOUND=======")))
+        with indent(4):
+            puts(colored.yellow(contents.get("body", "========NOT FOUND=======")))
 
 
 def deletenote(docopt_args):
     noteid = docopt_args["<note_id>"]
     note = NoteOperations()
-    
+
     if docopt_args["-a"]:
-        puts("Are you sure you want to delete all notes? [" + colored.red("y") + "][" + colored.green("n") + "]")
+        puts(
+            "Are you sure you want to delete all notes? [" + colored.red("y") + "][" + colored.green("n") + "]")
         answer = raw_input(">")
         if answer == "y":
-            status = note.delete(noteid,"all")
+            status = note.delete(noteid, "all")
         else:
             return
     else:
-        puts("Are you sure you want to delete note " + str(note.getnotetitle(noteid)) + "? [" + colored.red("y") + "][" + colored.green("n") + "]")
+        puts("Are you sure you want to delete note " + str(note.getnotetitle(noteid)
+                                                           ) + "? [" + colored.red("y") + "][" + colored.green("n") + "]")
         answer = raw_input(">")
         if answer == "y":
             notetitle = note.getnotetitle(noteid)
-            status = note.delete(noteid,"one")
+            status = note.delete(noteid, "one")
         else:
             return
-        
+
     if status > 0:
         with indent(4, quote=' >'):
             if docopt_args["-a"]:
                 puts(colored.red("Successfully deleted all notes"))
+                note = NoteOperations()
+                note.deletenotesfromcloud()
             else:
                 puts(colored.red("Successfully deleted note ") +
                      colored.green(notetitle))
-            note = NoteOperations()
-            note.synctocloud()
+                note = NoteOperations()
+                note.synctocloud()
     else:
         with indent(4, quote=' >'):
             puts(colored.red("Sorry,the note with id ") +
@@ -187,8 +205,13 @@ def deletenote(docopt_args):
 
 
 def listnotes(docopt_args):
+    hasnext = ""
     if docopt_args["--limit"]:
         limit = docopt_args["<items>"]
+        print limit
+        insertvaluecache("list", str(limit))
+        # Scrible().hasnext = "list" + str(limit)
+        # print "next" + Scrible().hasnext
         note = NoteOperations()
         allnotes = note.viewall(limit)
     else:
@@ -197,18 +220,21 @@ def listnotes(docopt_args):
     if len(allnotes) > 0:
         for item in allnotes:
             with indent(4, quote=' >'):
-                puts("[" + colored.green(item.get("_id", ""))+"] " + colored.green(item.get("title", "========NOT FOUND=======")))
+                puts("[" + colored.green(item.get("_id", "")) + "] " +
+                     colored.green(item.get("title", "========NOT FOUND=======")))
             with indent(4):
                 puts(colored.yellow(item.get("body", "")))
     else:
         with indent(4):
-                puts(colored.yellow("Sorry, no notes present"))
+            puts(colored.yellow("Sorry, no notes present"))
 
 
 def searchnotes(docopt_args):
+    hasnext = ""
     query = docopt_args["<query_string>"]
     if docopt_args["--limit"]:
         limit = docopt_args["<items>"]
+        Scrible().hasnext = "search" + str(limit)
         note = NoteOperations()
         notes = note.search(query, limit)
     else:
@@ -241,6 +267,7 @@ def importnotes(docopt_args):
             note.save(title=title, body=body)
         note.synctocloud()
 
+
 def export(docopt_args):
     filename = docopt_args["<filename>"]
     finalfilepath = filename + ".csv"
@@ -252,21 +279,74 @@ def export(docopt_args):
             title = item.get("title", "")
             body = item.get("body", "")
             timedate = item.get("datecreated", "")
-            templist = [title,body,timedate]
+            templist = [title, body, timedate]
             noteslist.append(templist)
         with open(finalfilepath, 'wb') as fp:
             a = csv.writer(fp, delimiter=',')
             a.writerows(noteslist)
-            puts(colored.green("Notes exported successfully to " + os.getcwd() + "/" + finalfilepath ))
+            puts(colored.green(
+                "Notes exported successfully to " + os.getcwd() + "/" + finalfilepath))
     else:
         with indent(4):
-                puts(colored.yellow("Sorry, no notes present"))
+            puts(colored.yellow("Sorry, no notes present"))
 
-def next(docopt_args):
-    pass
+
+def nextquery(docopt_args):
+    values = readvaluescache()
+    if len(values) > 0:
+        op = values.get("op", "")
+        if op == "list":
+            skip = values.get("skip", "")
+            print "skip:" + str(skip)
+            note = NoteOperations()
+            allnotes = note.viewallskip(skip, skip)
+            if len(allnotes) > 0:
+                insertvaluecache("list", str(int(skip) + 1))
+                for item in allnotes:
+                    with indent(4, quote=' >'):
+                        puts("[" + colored.green(item.get("_id", "")) + "] " +
+                             colored.green(item.get("title", "========NOT FOUND=======")))
+                    with indent(4):
+                        puts(colored.yellow(item.get("body", "")))
+            else:
+                with indent(4):
+                    puts(colored.yellow("End of notes"))
+        else:
+            pass
+    else:
+        pass
+
+
+def createcache():
+    with open("cache", 'wb') as fp:
+        a = csv.writer(fp, delimiter=',')
+        noteslist = ""
+        a.writerows(noteslist)
+
+
+def insertvaluecache(op, sk):
+    with open("cache", 'wb') as fp:
+        a = csv.writer(fp, delimiter=',')
+        noteslist = [[op, sk]]
+        a.writerows(noteslist)
+
+
+def readvaluescache():
+    file = open("cache")
+    numline = len(file.readlines())
+    if numline > 0:
+        with open("cache", 'rb') as f:
+            reader = csv.reader(f)
+            for row in reader:
+                op = row[0]
+                skip = row[1]
+            return {'op': op, 'skip': skip}
+    else:
+        return {}
 
 
 if opt['--start']:
+    createcache()
     Scrible().cmdloop()
 
 print(opt)
