@@ -7,11 +7,11 @@ setup(name='scrible',
       author='Jack Mwangi',
       author_email='jackmwa94@gmail.com',
       license='MIT',
-      entry_points = {
-        'console_scripts': ['scrible = scrible.notes.scrible:main'],
+      entry_points={
+          'console_scripts': ['scrible = scrible.notes.scrible:main'],
       },
       packages=['scrible'],
-       install_requires=['docopt','clint'
-      ],
+      install_requires=['docopt', 'clint', 'requests', 'python-firebase'
+                        ],
       include_package_data=True,
       zip_safe=False)
