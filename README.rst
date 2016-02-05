@@ -51,6 +51,7 @@ Installation
 ======================================================================
 
 Use `pip <http://pip-installer.org>`_ or easy_install::
+Aftwerwards copy the database to the install directory `scribler.db`
 
     pip install -e git+https://github.com/jaxtreme01/Scrible#egg=scrible
 
