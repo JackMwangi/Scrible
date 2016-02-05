@@ -15,6 +15,12 @@
 **Scrible** enables you create short and descriptive notes with cloud backup
 *easily*:
 
+
+Launching program
+======================================================================
+
+    scrible --start
+
 .. code:: python
 
     """Scrible.
@@ -46,7 +52,7 @@ Installation
 
 Use `pip <http://pip-installer.org>`_ or easy_install::
 
-    pip install scrible
+    pip install -e git+https://github.com/jaxtreme01/Scrible#egg=scrible
 
 Testing
 ======================================================================
@@ -105,10 +111,7 @@ Usage pattern format
 	sync 
 
 
-Launching program
-======================================================================
 
-    scrible --start
 
 
 
