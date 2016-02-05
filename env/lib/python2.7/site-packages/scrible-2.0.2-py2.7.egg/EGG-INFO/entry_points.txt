@@ -1,0 +1,3 @@
+[console_scripts]
+scrible = scrible.notes.scrible:main
+

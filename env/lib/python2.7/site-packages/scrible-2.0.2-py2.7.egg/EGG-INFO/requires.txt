@@ -1,0 +1,7 @@
+docopt
+clint
+requests
+python-firebase
+colorama
+pyfiglet
+termcolor

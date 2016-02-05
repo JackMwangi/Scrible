@@ -1,0 +1,13 @@
+MANIFEST.in
+README.rst
+setup.cfg
+setup.py
+scrible/__init__.py
+scrible/scribler.db
+scrible.egg-info/PKG-INFO
+scrible.egg-info/SOURCES.txt
+scrible.egg-info/dependency_links.txt
+scrible.egg-info/entry_points.txt
+scrible.egg-info/not-zip-safe
+scrible.egg-info/requires.txt
+scrible.egg-info/top_level.txt
