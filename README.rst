@@ -63,46 +63,46 @@ Usage pattern format
 - View specific notes 
 .. code:: python
 
-viewnote (<note_id>) [-m]
+	viewnote (<note_id>) [-m]
 
 - Create note with just title 
 .. code:: python 
 
-createnote  (<note_title>)
+	createnote  (<note_title>)
 
 - Create note with title and body
 .. code:: python 
 
-createnote  (<note_title>) [-m]
+	createnote  (<note_title>) [-m]
 
 - Delete notes
 .. code:: python 
 
-deletenote  (<note_id> | -a)
+	deletenote  (<note_id> | -a)
 
 - Search notes
 .. code:: python 
 
-searchnotes (<query_string>) [(--limit <items>)]
+	searchnotes (<query_string>) [(--limit <items>)]
 
 - List notes
 .. code:: python 
 
-listnotes   [(--limit <items>)]
+	listnotes [(--limit <items>)]
 
 - Import notes
 .. code:: python 
 
-import      (<filename>)
+	import (<filename>)
 
 - Export notes
 .. code:: python 
 
-import      (<filename>)
+	export (<filename>)
 
 - Manually sync notes
 
-sync 
+	sync 
 
 
 Launching program
